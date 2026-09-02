@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Расписание | mrger</title>
+    <!-- Подключаем Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* --- БАЗОВЫЕ ПЕРЕМЕННЫЕ И СБРОС --- */
+        :root {
+            --bg-color: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-main: #2D3436;
+            --text-secondary: #636E72;
+            --accent: #6C5CE7;
+            --accent-light: #A29BFE;
+            --success: #00B894;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container { width: 100%; max-width: 430px; padding: 20px; padding-bottom: 40px; }
+
+        /* --- ШАПКА --- */
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .greeting h1 { font-size: 24px; font-weight: 700; }
+        .greeting p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+        
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        .xp-badge {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: white; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3); display: flex; align-items: center; gap: 5px;
+        }
+
+        .backpack-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: none;
+            background: var(--card-bg); color: var(--accent);
+            box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .backpack-btn:active { transform: scale(0.9); }
+
+        /* --- ПЕРЕКЛЮЧАТЕЛЬ ДНЕЙ --- */
+        .days-nav { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 24px; scrollbar-width: none; }
+        .days-nav::-webkit-scrollbar { display: none; }
+        .day-btn {
+            flex-shrink: 0; padding: 10px 18px; border-radius: 12px; border: none;
+            background: var(--card-bg); color: var(--text-secondary); font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; box-shadow: var(--shadow);
+        }
+        .day-btn.active { background: var(--accent); color: white; transform: scale(1.05); box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4); }
+
+        /* --- СПИСОК УРОКОВ --- */
+        .schedule-list { display: flex; flex-direction: column; gap: 16px; }
+
+        .lesson-card {
+            background: var(--card-bg); border-radius: var(--radius); padding: 16px;
+            display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow);
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+            animation: slideUp 0.4s ease forwards; opacity: 0;
+        }
+        .lesson-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+        .lesson-card.completed { opacity: 0.6; }
+        .lesson-card.completed .lesson-info h3 { text-decoration: line-through; color: var(--text-secondary); }
+
+        .lesson-time { font-size: 14px; font-weight: 700; color: var(--accent); min-width: 45px; text-align: center; }
+        
+        .lesson-icon { 
+            width: 44px; height: 44px; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; 
+            flex-shrink: 0;
+        }
+        .lesson-icon svg { width: 24px; height: 24px; }
+        
+        .icon-math { background: #FFEAA7; color: #D63031; }
+        .icon-rus { background: #81ECEC; color: #0984E3; }
+        .icon-pe { background: #55EFC4; color: #00B894; }
+        .icon-eng { background: #FAB1A0; color: #E17055; }
+        .icon-lit { background: #FF7675; color: #D63031; }
+        .icon-sci { background: #74B9FF; color: #0984E3; }
+        .icon-art { background: #A29BFE; color: #6C5CE7; }
+
+        .lesson-info { flex: 1; }
+        .lesson-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; transition: all 0.3s; }
+        .lesson-info p { font-size: 13px; color: var(--text-secondary); }
+
+        .quest-check {
+            width: 28px; height: 28px; border: 2px solid #DFE6E9; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0;
+        }
+        .quest-check:hover { border-color: var(--accent); }
+        .lesson-card.completed .quest-check { background: var(--success); border-color: var(--success); color: white; transform: scale(1.1); }
+        .lesson-card.completed .quest-check svg { stroke: white; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .lesson-card:nth-child(2) { animation-delay: 0.1s; }
+        .lesson-card:nth-child(3) { animation-delay: 0.2s; }
+        .lesson-card:nth-child(4) { animation-delay: 0.3s; }
+
+        /* --- МОДАЛЬНОЕ ОКНО (ПОРТФЕЛЬ) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 100;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .modal-content {
+            background: var(--card-bg); width: 90%; max-width: 380px;
+            border-radius: 24px; padding: 24px; transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .close-modal { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; }
+
+        .backpack-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .backpack-item {
+            background: var(--bg-color); padding: 12px 16px; border-radius: 12px;
+            display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 500;
+        }
+        .backpack-item-icon { display: flex; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- ШАПКА -->
+        <header class="app-header">
+            <div class="greeting">
+                <h1>Привет, Герой! 👋</h1>
+                <p id="lessons-count">Сегодня у тебя 0 квестов</p>
+            </div>
+            <div class="header-actions">
+                <button class="backpack-btn" onclick="openBackpack()" title="Собрать портфель">
+                    <i data-lucide="backpack" style="width: 20px; height: 20px;"></i>
+                </button>
+                <div class="xp-badge">⚡ Ур. 5</div>
+            </div>
+        </header>
+
+        <!-- ДНИ НЕДЕЛИ -->
+        <nav class="days-nav" id="days-nav"></nav>
+
+        <!-- РАСПИСАНИЕ -->
+        <main class="schedule-list" id="schedule-list"></main>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div class="modal-overlay" id="backpack-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎒 Портфель на завтра</h2>
+                <button class="close-modal" onclick="closeBackpack()">✕</button>
+            </div>
+            <ul class="backpack-list" id="backpack-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ДАННЫЕ (JSON) С ИКОНКАМИ LUCIDE ---
+        const scheduleData = {
+            mon: [
+                { time: "08:30", subject: "Математика", room: "305", teacher: "Иванова И.И.", iconName: "calculator", colorClass: "icon-math", items: ["Учебник стр. 45", "Тетрадь в клетку", "Линейка"] },
+                { time: "09:25", subject: "Русский язык", room: "210", teacher: "Петрова А.С.", iconName: "book-open", colorClass: "icon-rus", items: ["Учебник ч.1", "Рабочая тетрадь", "Орфографический словарь"] },
+                { time: "10:20", subject: "Английский язык", room: "102", teacher: "Смит Дж.", iconName: "globe", colorClass: "icon-eng", items: ["Workbook", "Словарик"] },
+                { time: "11:15", subject: "Физкультура", room: "Спортзал", teacher: "Сидоров В.П.", iconName: "activity", colorClass: "icon-pe", items: ["Спортивная форма", "Кроссовки", "Полотенце"] }
+            ],
+            tue: [
+                { time: "08:30", subject: "Литература", room: "210", teacher: "Петрова А.С.", iconName: "book", colorClass: "icon-lit", items: ["Хрестоматия", "Тетрадь для анализа"] },
+                { time: "09:25", subject: "Математика", room: "305", teacher: "Иванова И.И.", iconName: "calculator", colorClass: "icon-math", items: ["Учебник стр. 50", "Тетрадь", "Чертежные инструменты"] },
+                { time: "10:20", subject: "Окружающий мир", room: "305", teacher: "Иванова И.И.", iconName: "flask-conical", colorClass: "icon-sci", items: ["Учебник", "Блокнот для опытов"] }
+            ],
+            wed: [
+                { time: "08:30", subject: "Русский язык", room: "210", teacher: "Петрова А.С.", iconName: "book-open", colorClass: "icon-rus", items: ["Учебник ч.1", "Тетрадь"] },
+                { time: "09:25", subject: "ИЗО", room: "105", teacher: "Леонардо д.В.", iconName: "palette", colorClass: "icon-art", items: ["Альбом", "Акварель", "Кисти"] }
+            ],
+            thu: [
+                { time: "08:30", subject: "Математика", room: "305", teacher: "Иванова И.И.", iconName: "calculator", colorClass: "icon-math", items: ["Учебник", "Тетрадь"] },
+                { time: "09:25", subject: "Английский язык", room: "102", teacher: "Смит Дж.", iconName: "globe", colorClass: "icon-eng", items: ["Учебник", "Workbook"] }
+            ],
+            fri: [
+                { time: "08:30", subject: "Физкультура", room: "Спортзал", teacher: "Сидоров В.П.", iconName: "activity", colorClass: "icon-pe", items: ["Форма", "Кроссовки"] },
+                { time: "09:25", subject: "Литература", room: "210", teacher: "Петрова А.С.", iconName: "book", colorClass: "icon-lit", items: ["Книга для чтения"] }
+            ],
+            sat: []
+        };
+
+        const daysMap = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const daysNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        
+        let currentDayIndex = new Date().getDay() - 1;
+        if (currentDayIndex < 0) currentDayIndex = 6;
+        if (currentDayIndex === 6) currentDayIndex = 0;
+
+        // --- 2. ЛОГИКА СОХРАНЕНИЯ (LOCALSTORAGE) ---
+        const STORAGE_KEY = 'mrger_schedule_progress';
+
+        function loadProgress() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) return {};
+            
+            const parsed = JSON.parse(data);
+            const today = new Date().toDateString();
+            
+            if (parsed.date !== today) {
+                localStorage.removeItem(STORAGE_KEY);
+                return {};
+            }
+            
+            return parsed.completed || {};
+        }
+
+        function saveProgress() {
+            const data = {
+                date: new Date().toDateString(),
+                completed: completedQuests
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        let completedQuests = loadProgress();
+
+        // --- 3. ЗВУКИ И ВИБРАЦИЯ ---
+        function playFeedback(isSuccess) {
+            if (navigator.vibrate) {
+                navigator.vibrate(isSuccess ? 50 : 30);
+            }
+
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.type = 'sine';
+                
+                if (isSuccess) {
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.15);
+                } else {
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.15);
+                }
+
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {}
+        }
+
+        // --- 4. РЕНДЕРИНГ ---
+        function init() {
+            renderDaysNav();
+            renderSchedule(currentDayIndex);
+            // Инициализация иконок Lucide
+            lucide.createIcons();
+        }
+
+        function renderDaysNav() {
+            const nav = document.getElementById('days-nav');
+            nav.innerHTML = '';
+            daysNames.forEach((name, index) => {
+                if (index < 6) {
+                    const btn = document.createElement('button');
+                    btn.className = `day-btn ${index === currentDayIndex ? 'active' : ''}`;
+                    btn.textContent = name;
+                    btn.onclick = () => selectDay(index);
+                    nav.appendChild(btn);
+                }
+            });
+        }
+
+        function selectDay(index) {
+            currentDayIndex = index;
+            renderDaysNav();
+            renderSchedule(index);
+        }
+
+        function renderSchedule(dayIndex) {
+            const list = document.getElementById('schedule-list');
+            const dayKey = daysMap[dayIndex];
+            const lessons = scheduleData[dayKey];
+            
+            document.getElementById('lessons-count').textContent = `Сегодня у тебя ${lessons.length} квестов`;
+
+            list.innerHTML = '';
+            if (lessons.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:var(--text-secondary); margin-top:40px;">Ура! Выходной 🎉</p>';
+                return;
+            }
+
+            lessons.forEach((lesson, i) => {
+                const card = document.createElement('div');
+                card.className = 'lesson-card';
+                card.style.animationDelay = `${i * 0.1}s`;
+                card.dataset.index = i;
+                
+                const key = `${dayIndex}_${i}`;
+                const isCompleted = completedQuests[key];
+                
+                if (isCompleted) {
+                    card.classList.add('completed');
+                }
+
+                // Создаем SVG иконку через Lucide
+                const iconSvg = `<i data-lucide="${lesson.iconName}"></i>`;
+
+                card.innerHTML = `
+                    <div class="lesson-time">${lesson.time}</div>
+                    <div class="lesson-icon ${lesson.colorClass}">${iconSvg}</div>
+                    <div class="lesson-info">
+                        <h3>${lesson.subject}</h3>
+                        <p>${lesson.room} • ${lesson.teacher}</p>
+                    </div>
+                    <div class="quest-check" onclick="toggleQuest(this)">${isCompleted ? '<i data-lucide="check" style="width:16px;height:16px;"></i>' : ''}</div>
+                `;
+                list.appendChild(card);
+            });
+            
+            // Пересоздаем иконки после рендера
+            lucide.createIcons();
+        }
+
+        // --- 5. ЛОГИКА КВЕСТА ---
+        function toggleQuest(element) {
+            const card = element.closest('.lesson-card');
+            const lessonIndex = card.dataset.index;
+            const key = `${currentDayIndex}_${lessonIndex}`;
+            
+            const isCompleted = card.classList.toggle('completed');
+            
+            if (isCompleted) {
+                element.innerHTML = '<i data-lucide="check" style="width:16px;height:16px;"></i>';
+                completedQuests[key] = true;
+                playFeedback(true);
+            } else {
+                element.innerHTML = '';
+                delete completedQuests[key];
+                playFeedback(false);
+            }
+            
+            saveProgress();
+            lucide.createIcons();
+        }
+
+        // --- 6. ЛОГИКА ПОРТФЕЛЯ ---
+        function openBackpack() {
+            const modal = document.getElementById('backpack-modal');
+            const list = document.getElementById('backpack-list');
+            
+            let tomorrowIndex = currentDayIndex + 1;
+            if (tomorrowIndex > 5) tomorrowIndex = 0;
+            
+            const tomorrowKey = daysMap[tomorrowIndex];
+            const tomorrowLessons = scheduleData[tomorrowKey];
+            
+            list.innerHTML = '';
+            if (tomorrowLessons.length === 0) {
+                list.innerHTML = '<li class="backpack-item">Завтра выходной, рюкзак не нужен!</li>';
+            } else {
+                const allItems = [];
+                tomorrowLessons.forEach(l => allItems.push(...l.items));
+                const uniqueItems = [...new Set(allItems)];
+
+                uniqueItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'backpack-item';
+                    li.innerHTML = `
+                        <span class="backpack-item-icon">
+                            <i data-lucide="check-circle-2" style="width:20px;height:20px;color:var(--success);"></i>
+                        </span>
+                        ${item}
+                    `;
+                    list.appendChild(li);
+                });
+            }
+            
+            modal.classList.add('active');
+            lucide.createIcons();
+        }
+
+        function closeBackpack() {
+            document.getElementById('backpack-modal').classList.remove('active');
+        }
+
+        // Запуск
+        init();
+    </script>
+</body>
+</html>
